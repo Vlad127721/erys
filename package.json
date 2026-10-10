@@ -1,0 +1,21 @@
+{
+  "name": "youscan-dashboard",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "dev:api": "npm run dev -w @youscan/api",
+    "dev:web": "npm run dev -w @youscan/web",
+    "db:migrate": "npm run db:migrate -w @youscan/api",
+    "db:seed": "npm run db:seed -w @youscan/api --",
+    "build": "npm run build -w @youscan/shared && npm run build -w @youscan/api && npm run build -w @youscan/web",
+    "typecheck": "npm run build -w @youscan/shared && npm run typecheck -w @youscan/api && npm run typecheck -w @youscan/web",
+    "test": "npm run build -w @youscan/shared && npm run test -w @youscan/api && npm run test -w @youscan/web"
+  }
+}

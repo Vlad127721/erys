@@ -1,0 +1,25 @@
+[
+  {
+    "sourceKey": "initial-dashboard#line",
+    "file": "line-and-pie.xlsx",
+    "sheet": "line chart data",
+    "widgetType": "LINE",
+    "title": "Results by campaign",
+    "mapping": { "shape": "long", "x": "Date", "series": "Campaign", "value": "Result" }
+  },
+  {
+    "sourceKey": "initial-dashboard#pie",
+    "file": "line-and-pie.xlsx",
+    "sheet": "pie chart data",
+    "widgetType": "PIE",
+    "title": "Share of results by campaign",
+    "mapping": { "shape": "wide", "category": "Campaign", "values": ["Result"] }
+  },
+  {
+    "sourceKey": "initial-dashboard#stacked-bar",
+    "file": "stacked-bar.csv",
+    "widgetType": "STACKED_BAR",
+    "title": "Sentiment by brand",
+    "mapping": { "shape": "wide", "category": "Brand", "values": ["Positive", "Neutral", "Negative"] }
+  }
+]

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "npm ci",
+  "buildCommand": "npm run build && if [ \"$VERCEL_ENV\" = \"production\" ]; then npm run db:migrate; fi",
+  "outputDirectory": "apps/web/dist",
+  "rewrites": [{ "source": "/api/(.*)", "destination": "/api" }],
+  "functions": {
+    "api/index.mjs": { "maxDuration": 30 }
+  }
+}

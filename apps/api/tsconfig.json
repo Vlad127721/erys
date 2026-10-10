@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": [
+      "node",
+      "multer"
+    ],
+    "noEmit": true,
+    "declaration": false
+  },
+  "include": [
+    "src",
+    "test",
+    "prisma.config.ts",
+    "vitest.config.ts"
+  ]
+}

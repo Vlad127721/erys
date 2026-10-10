@@ -1,0 +1,87 @@
+@import 'tailwindcss';
+
+/*
+ * Design tokens. Light by default, dark when <html data-theme="dark"> (set by src/theme.ts and,
+ * before first paint, by the inline script in index.html). Utilities read them through
+ * @theme below (bg-surface, text-ink, border-hairline, …), so components need no dark: variants.
+ * Chart colours live in charts/palette.ts: Recharts writes SVG attributes, which cannot read CSS variables.
+ */
+:root {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface: #fcfcfb;
+  --ink: #0b0b0b;
+  --ink-secondary: #52514e;
+  --ink-muted: #898781;
+  --hairline: #e1e0d9;
+  --line: rgba(11, 11, 11, 0.1);
+  --accent: #2a78d6;
+  --accent-ink: #ffffff;
+  --danger: #d03b3b;
+  --danger-wash: rgba(208, 59, 59, 0.08);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --page: #0d0d0d;
+  --surface: #1a1a19;
+  --ink: #f0efec;
+  --ink-secondary: #c3c2b7;
+  --ink-muted: #898781;
+  --hairline: #2c2c2a;
+  --line: rgba(255, 255, 255, 0.1);
+  --accent: #3987e5;
+  --danger: #e66767;
+  --danger-wash: rgba(230, 103, 103, 0.12);
+}
+
+@theme inline {
+  --font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-secondary: var(--ink-secondary);
+  --color-ink-muted: var(--ink-muted);
+  --color-hairline: var(--hairline);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-danger: var(--danger);
+  --color-danger-wash: var(--danger-wash);
+}
+
+/* Entrance motion: cards rise in when they appear, content fades up when its data arrives. */
+@theme {
+  --animate-rise-in: rise-in 450ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-content-in: content-in 350ms ease-out both;
+
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(0.98);
+    }
+  }
+
+  @keyframes content-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+}
+
+/*
+ * Recharts 3.10 measures a line's length during render. A line that has just mounted has no
+ * <path> yet, so its first frame gets stroke-dasharray="0px 0px", which SVG draws as a solid
+ * line: the full chart flashed before the draw-in animation (e.g. when clearing a chart filter).
+ * Hide only that unmeasured state; animating lines carry a real length, finished ones none.
+ */
+.recharts-line-curve[stroke-dasharray='0px 0px'] {
+  visibility: hidden;
+}
+
+@layer base {
+  body {
+    @apply bg-page font-sans text-[14px] leading-normal text-ink;
+  }
+}

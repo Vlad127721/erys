@@ -1,0 +1,30 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum WidgetType {
+  LINE
+  BAR
+  STACKED_BAR
+  PIE
+  TEXT
+}
+
+model Widget {
+  id        String     @id @default(uuid()) @db.Uuid
+  type      WidgetType
+  title     String
+  data      Json
+  sourceKey String?    @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@index([createdAt])
+  @@map("widgets")
+}

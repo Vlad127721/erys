@@ -1,0 +1,40 @@
+{
+  "name": "@youscan/api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prisma:generate": "prisma generate",
+    "build": "prisma generate && tsc -p tsconfig.build.json",
+    "typecheck": "prisma generate && tsc -p tsconfig.json --noEmit",
+    "start": "node dist/main.js",
+    "dev": "concurrently -k -n tsc,api \"tsc -p tsconfig.build.json -w --preserveWatchOutput\" \"node --watch-path=dist --env-file-if-exists=.env dist/main.js\"",
+    "db:migrate": "prisma migrate deploy",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:seed": "node --env-file-if-exists=.env dist/cli/seed.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "@youscan/shared": "^1.0.0",
+    "csv-parse": "^7.0.3",
+    "exceljs": "^4.4.0",
+    "express": "^5.3.0",
+    "multer": "^2.4.0",
+    "pg": "^8.23.1",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/multer": "^2.3.0",
+    "@types/node": "^24.19.2",
+    "@types/pg": "^8.23.1",
+    "@types/supertest": "^7.2.1",
+    "concurrently": "^10.0.6",
+    "prisma": "^7.10.0",
+    "supertest": "^7.3.1",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.3"
+  }
+}
