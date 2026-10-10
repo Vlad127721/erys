@@ -12,7 +12,6 @@ pipeline. Nothing is hardcoded.
 data/                 provided files + seed manifest (what the initial dashboard is built from)
 packages/shared/      zod schemas: widget payloads, chart data, import mapping
 apps/api/             Express API: routes (src/http), services, repository, import pipeline
-api/index.mjs         Vercel Function entry (re-exports the built API)
 apps/web/             React app
 ```
 
@@ -123,17 +122,20 @@ palettes have light and dark variants.
 
 ## Deployment
 
-Everything runs on one Vercel project (`vercel.json` at the repository root):
+One Vercel project with two **services** (`vercel.json` at the repository root), on one domain:
 
-- **Web:** static files from `apps/web/dist`.
-- **API:** one Vercel Function, `api/index.mjs`, which re-exports the built Express app; every
-  `/api/*` request is rewritten to it. Web and API share a domain, so there is no CORS setup and
-  `VITE_API_URL` stays empty.
+| Service | Source | Public path | Build |
+|---|---|---|---|
+| `web` | `apps/web` (Vite) | `/` | shared contracts, then the web app → `apps/web/dist` |
+| `api` | `apps/api` (Express) | `/api/*` | `scripts/vercel-build-api.sh`: shared contracts, the API, then migrations on production |
+
+- The API service's entrypoint is the built `apps/api/dist/vercel.js`, which exports the Express
+  app; it keeps the `/api` prefix, so paths are the same as locally. The web app calls the API on
+  the same origin (`/api`), so there is no CORS setup, no `VITE_API_URL` and no service bindings.
 - **Database:** Neon PostgreSQL through Vercel's Neon integration, which sets `DATABASE_URL`
-  (pooled, used by the app) and `DATABASE_URL_UNPOOLED` (used by migrations). Production builds
-  run `prisma migrate deploy` (`scripts/vercel-build.sh`); preview builds never migrate. The
-  function and the database both run in Frankfurt (`regions: ["fra1"]`, Neon `eu-central-1`). Also set `MAX_UPLOAD_SIZE_BYTES=4194304`: function request bodies
-  are capped at 4.5 MB.
+  (pooled, used by the app) and `DATABASE_URL_UNPOOLED` (used by migrations). Preview builds never
+  migrate. Also set `MAX_UPLOAD_SIZE_BYTES=4194304`: function request bodies are capped at 4.5 MB.
+  Functions run in Frankfurt (`regions: ["fra1"]`), next to Neon `eu-central-1`.
 - **Seed** once after the first deploy, from a local checkout:
   `npm run build -w @youscan/api && DATABASE_URL=<neon unpooled url> npm run db:seed`.
 

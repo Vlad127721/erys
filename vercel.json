@@ -1,21 +1,25 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": null,
-  "installCommand": "npm ci",
-  "buildCommand": "bash scripts/vercel-build.sh",
-  "outputDirectory": "apps/web/dist",
-  "regions": [
-    "fra1"
-  ],
+  "regions": ["fra1"],
+  "services": {
+    "api": {
+      "root": "apps/api",
+      "framework": "express",
+      "runtime": "nodejs24.x",
+      "installCommand": "cd ../.. && npm ci",
+      "buildCommand": "bash ../../scripts/vercel-build-api.sh",
+      "entrypoint": "dist/vercel.js"
+    },
+    "web": {
+      "root": "apps/web",
+      "framework": "vite",
+      "installCommand": "cd ../.. && npm ci",
+      "buildCommand": "cd ../.. && npm run build -w @youscan/shared && npm run build -w @youscan/web",
+      "outputDirectory": "dist"
+    }
+  },
   "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api"
-    }
-  ],
-  "functions": {
-    "api/index.mjs": {
-      "maxDuration": 30
-    }
-  }
+    { "source": "/api/(.*)", "destination": { "service": "api" } },
+    { "source": "/(.*)", "destination": { "service": "web" } }
+  ]
 }
