@@ -1,5 +1,4 @@
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
+import { DATA_DIR } from '../src/paths.js';
 
-export const DATA_DIR = fileURLToPath(new URL('../../../data/', import.meta.url));
-
-export const dataFile = (name: string): string => DATA_DIR + name;
+export const dataFile = (name: string): string => join(DATA_DIR, name);

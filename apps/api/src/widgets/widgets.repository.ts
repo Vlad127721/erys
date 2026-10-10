@@ -71,7 +71,7 @@ export class WidgetsRepository {
   async create({ title, payload }: Omit<NewWidget, 'sourceKey'>): Promise<WidgetMeta> {
     const { type, data } = widgetPayloadSchema.parse(payload);
     const row = await this.prisma.widget.create({
-      data: { type, title, data: data as Prisma.InputJsonValue },
+      data: { type, title, data: data },
       select: metaSelect,
     });
     return toMeta(row);
@@ -82,7 +82,7 @@ export class WidgetsRepository {
     const { type, data } = widgetPayloadSchema.parse(payload);
     const { count } = await this.prisma.widget.updateMany({
       where: { id, type },
-      data: { data: data as Prisma.InputJsonValue },
+      data: { data: data },
     });
     return count === 0 ? null : this.findMeta(id);
   }
@@ -100,7 +100,7 @@ export class WidgetsRepository {
   async saveMany(widgets: readonly NewWidget[], onExisting: OnExistingSource): Promise<SavedWidget[]> {
     const rows = widgets.map(({ title, payload, sourceKey }) => {
       const { type, data } = widgetPayloadSchema.parse(payload);
-      return { title, type, data: data as Prisma.InputJsonValue, sourceKey: sourceKey ?? null };
+      return { title, type, data: data, sourceKey: sourceKey ?? null };
     });
 
     return this.prisma.$transaction(async (tx) => {

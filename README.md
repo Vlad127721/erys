@@ -131,7 +131,8 @@ Everything runs on one Vercel project (`vercel.json` at the repository root):
   `VITE_API_URL` stays empty.
 - **Database:** Neon PostgreSQL through Vercel's Neon integration, which sets `DATABASE_URL`
   (pooled, used by the app) and `DATABASE_URL_UNPOOLED` (used by migrations). Production builds
-  run `prisma migrate deploy`. Also set `MAX_UPLOAD_SIZE_BYTES=4194304`: function request bodies
+  run `prisma migrate deploy` (`scripts/vercel-build.sh`); preview builds never migrate. The
+  function and the database both run in Frankfurt (`regions: ["fra1"]`, Neon `eu-central-1`). Also set `MAX_UPLOAD_SIZE_BYTES=4194304`: function request bodies
   are capped at 4.5 MB.
 - **Seed** once after the first deploy, from a local checkout:
   `npm run build -w @youscan/api && DATABASE_URL=<neon unpooled url> npm run db:seed`.

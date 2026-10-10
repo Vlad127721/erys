@@ -2,10 +2,20 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
   "installCommand": "npm ci",
-  "buildCommand": "npm run build && if [ \"$VERCEL_ENV\" = \"production\" ]; then npm run db:migrate; fi",
+  "buildCommand": "bash scripts/vercel-build.sh",
   "outputDirectory": "apps/web/dist",
-  "rewrites": [{ "source": "/api/(.*)", "destination": "/api" }],
+  "regions": [
+    "fra1"
+  ],
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api"
+    }
+  ],
   "functions": {
-    "api/index.mjs": { "maxDuration": 30 }
+    "api/index.mjs": {
+      "maxDuration": 30
+    }
   }
 }

@@ -16,7 +16,7 @@ export interface ExtractedWidget {
 }
 
 /**
- * parse → pick sheet → normalize → map → validate, for every target. Pure: nothing is
+ * parse -> pick sheet -> normalize -> map → validate, for every target. Pure: nothing is
  * persisted, so a failure in any target leaves no trace.
  */
 export async function extractWidgets(
@@ -31,7 +31,7 @@ export async function extractWidgets(
       return { title: target.title, payload: mapTableToWidget(table, target) };
     } catch (error) {
       if (error instanceof IngestionError) {
-        throw new IngestionError(`${file.name} → "${target.title}": ${error.message}`, error.details, { cause: error });
+        throw new IngestionError(`${file.name} => "${target.title}": ${error.message}`, error.details, { cause: error });
       }
       throw error;
     }
