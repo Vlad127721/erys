@@ -8,7 +8,7 @@
       "runtime": "nodejs24.x",
       "installCommand": "cd ../.. && npm ci",
       "buildCommand": "bash ../../scripts/vercel-build-api.sh",
-      "entrypoint": "dist/vercel.js"
+      "entrypoint": "server.js"
     },
     "web": {
       "root": "apps/web",
