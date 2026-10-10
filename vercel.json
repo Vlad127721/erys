@@ -5,7 +5,6 @@
     "api": {
       "root": "apps/api",
       "framework": "express",
-      "runtime": "nodejs24.x",
       "installCommand": "cd ../.. && npm ci",
       "buildCommand": "bash ../../scripts/vercel-build-api.sh",
       "entrypoint": "server.js"
