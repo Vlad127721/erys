@@ -4,6 +4,8 @@ A dashboard of widgets (line, bar, stacked bar, pie, text) in a three-column gri
 initial charts are built from the provided `.xlsx` and `.csv` files by a reusable import
 pipeline. Nothing is hardcoded.
 
+**Live:** https://erys-6t72.vercel.app
+
 - **Frontend:** React 19, TypeScript, Vite, TanStack Query, Recharts, Tailwind CSS 4
 - **Backend:** Node 24, Express 5, Prisma 7, PostgreSQL
 - **Shared:** `@youscan/shared`, the zod schemas behind every API contract, used by both sides
@@ -129,12 +131,14 @@ One Vercel project with two **services** (`vercel.json` at the repository root),
 | `web` | `apps/web` (Vite) | `/` | shared contracts, then the web app → `apps/web/dist` |
 | `api` | `apps/api` (Express) | `/api/*` | `scripts/vercel-build-api.sh`: shared contracts, the API, then migrations on production |
 
-- The API service's entrypoint is the built `apps/api/dist/vercel.js`, which exports the Express
-  app; it keeps the `/api` prefix, so paths are the same as locally. The web app calls the API on
+- The API service's entrypoint is `apps/api/server.js`, which re-exports the built
+  `dist/vercel.js` (the Express app); Vercel bundles it. The service sets `outputDirectory: "."`
+  so that Vercel does not ship `dist/` as is after the build command (it would pick `dist/app.js`
+  and lose `"type": "module"`). The app keeps the `/api` prefix, so paths are the same as locally. The web app calls the API on
   the same origin (`/api`), so there is no CORS setup, no `VITE_API_URL` and no service bindings.
 - **Database:** Neon PostgreSQL through Vercel's Neon integration, which sets `DATABASE_URL`
   (pooled, used by the app) and `DATABASE_URL_UNPOOLED` (used by migrations). Preview builds never
-  migrate. Also set `MAX_UPLOAD_SIZE_BYTES=4194304`: function request bodies are capped at 4.5 MB.
+  migrate; each preview deployment gets its own Neon branch, copied from production. Also set `MAX_UPLOAD_SIZE_BYTES=4194304`: function request bodies are capped at 4.5 MB.
   Functions run in Frankfurt (`regions: ["fra1"]`), next to Neon `eu-central-1`.
 - **Seed** once after the first deploy, from a local checkout:
   `npm run build -w @youscan/api && DATABASE_URL=<neon unpooled url> npm run db:seed`.
