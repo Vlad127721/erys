@@ -1,8 +1,10 @@
-# YouScan Dashboard
+# Test Task Dashboard
 
 A dashboard of widgets (line, bar, stacked bar, pie, text) in a three-column grid. The
 initial charts are built from the provided `.xlsx` and `.csv` files by a reusable import
-pipeline. Nothing is hardcoded.
+pipeline.
+
+**Live:** https://erys-6t72.vercel.app
 
 - **Frontend:** React 19, TypeScript, Vite, TanStack Query, Recharts, Tailwind CSS 4
 - **Backend:** Node 24, Express 5, Prisma 7, PostgreSQL
@@ -47,31 +49,6 @@ file ─► ParserRegistry ─► FileParser ─► RawTable[] ─► normalizeT
                                                         rows/columns)                          schema)
 ```
 
-- **Parsers** (`apps/api/src/ingestion/parsers`) only turn bytes into cell grids: ExcelJS for
-  `.xlsx`, `csv-parse` for `.csv`. A new format is one class implementing `FileParser`,
-  registered in `ParserRegistry`.
-- **XLSX cells:** formulas are not evaluated; the result Excel saved with the file is
-  imported, so `0` and `FALSE` stay as they are. A formula with no saved result is an empty
-  cell, the same as one returning `""`; ExcelJS cannot tell the two apart. Rich text and
-  hyperlinks import as their display text. Excel errors (`#N/A`, `#DIV/0!`, …) and
-  unsupported values fail the import, naming the sheet and cell.
-- **Normalization:** the first non-empty row is the header. Fully empty rows are dropped
-  (the provided workbook has ~790 formatted but empty rows). Header-less columns are dropped
-  if empty and rejected if they hold data. Duplicate column names are rejected.
-- **Mapping** is always explicit; columns are never guessed. Two shapes cover both files:
-
-  | shape  | meaning | provided example |
-  |--------|---------|------------------|
-  | `wide` | one row per category, one column per series | `stacked-bar.csv`: `Brand` × `Positive/Neutral/Negative` |
-  | `long` | one row per (x, series) pair, pivoted | `line chart data`: `Date` × `Campaign` → `Result` |
-
-  Dates (Excel date cells or `YYYY-MM-DD` strings) become ISO dates and are sorted
-  chronologically. Other categories keep file order. Empty cells become `null` gaps, never `0`.
-  Duplicate points, non-numeric values and unknown columns/sheets fail with a 400 that names
-  the column and row.
-- **Atomicity:** every target of an import is parsed and validated before the first write,
-  and all resulting widgets are saved in one transaction.
-
 ### Importing a new file
 
 Additional files are imported over HTTP (`multipart/form-data`); the same `IngestionService`
@@ -108,46 +85,3 @@ would bring back initial widgets that a user had deleted.
 Request bodies are validated with the shared zod schemas (400 with `issues`). Ids must be
 UUIDs (400). Missing widgets return 404. Stored data that fails validation returns 500 for
 that widget only.
-
-## Frontend: loading and errors per widget
-
-The list request returns layout only. Each widget then fetches its own data with its own
-query key, so it loads, fails and retries independently (one slow or broken widget does not
-block the others). Each card also has an error boundary for render-time crashes, and
-mutations (delete, save text) report errors inside their own card. If the list itself
-fails, there is no grid to show, so the page shows a single error with Retry.
-
-Chart colours follow the entity, not its position: brand A is the same blue in the line
-chart, the pie and new charts. Sentiment uses a diverging blue / gray / red scale. Both
-palettes have light and dark variants.
-
-## Deployment
-
-One Vercel project with two **services** (`vercel.json` at the repository root), on one domain:
-
-| Service | Source | Public path | Build |
-|---|---|---|---|
-| `web` | `apps/web` (Vite) | `/` | shared contracts, then the web app → `apps/web/dist` |
-| `api` | `apps/api` (Express) | `/api/*` | `scripts/vercel-build-api.sh`: shared contracts, the API, then migrations on production |
-
-- The API service's entrypoint is the built `apps/api/dist/vercel.js`, which exports the Express
-  app; it keeps the `/api` prefix, so paths are the same as locally. The web app calls the API on
-  the same origin (`/api`), so there is no CORS setup, no `VITE_API_URL` and no service bindings.
-- **Database:** Neon PostgreSQL through Vercel's Neon integration, which sets `DATABASE_URL`
-  (pooled, used by the app) and `DATABASE_URL_UNPOOLED` (used by migrations). Preview builds never
-  migrate. Also set `MAX_UPLOAD_SIZE_BYTES=4194304`: function request bodies are capped at 4.5 MB.
-  Functions run in Frankfurt (`regions: ["fra1"]`), next to Neon `eu-central-1`.
-- **Seed** once after the first deploy, from a local checkout:
-  `npm run build -w @youscan/api && DATABASE_URL=<neon unpooled url> npm run db:seed`.
-
-## Decisions and trade-offs
-
-- **One `widgets` table with a JSON `data` column** instead of normalized chart tables. The
-  payload shape depends on the widget type and is enforced by the shared discriminated union
-  on write and on read.
-- **One data request per widget:** 3–10 small requests per dashboard (cheap over HTTP/2) in
-  exchange for real per-widget loading and error states.
-- **Random data is persisted** when a chart is created, so a widget shows the same chart
-  after a reload.
-- **Order** is creation order (`createdAt`). Reordering was not required, so there is no
-  position column.
