@@ -10,6 +10,8 @@
     "node": ">=20.19"
   },
   "scripts": {
+    "setup": "node scripts/ensure-env.mjs && npm run build -w @youscan/shared && npm run db:migrate && npm run build -w @youscan/api && npm run db:seed",
+    "dev": "npm run build -w @youscan/shared && concurrently -k -n api,web -c blue,magenta \"npm:dev:api\" \"npm:dev:web\"",
     "dev:api": "npm run dev -w @youscan/api",
     "dev:web": "npm run dev -w @youscan/web",
     "db:migrate": "npm run db:migrate -w @youscan/api",
@@ -17,5 +19,8 @@
     "build": "npm run build -w @youscan/shared && npm run build -w @youscan/api && npm run build -w @youscan/web",
     "typecheck": "npm run build -w @youscan/shared && npm run typecheck -w @youscan/api && npm run typecheck -w @youscan/web",
     "test": "npm run build -w @youscan/shared && npm run test -w @youscan/api && npm run test -w @youscan/web"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.6"
   }
 }

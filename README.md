@@ -21,13 +21,14 @@ Requires Node 20.19+ (24 recommended) and PostgreSQL (`docker compose up -d` sta
 
 ```bash
 npm install
-cp apps/api/.env.example apps/api/.env      # adjust DATABASE_URL if needed
-npm run build -w @youscan/shared
-npm run db:migrate
-npm run build -w @youscan/api && npm run db:seed   # import the initial dashboard
-npm run dev:api        # http://localhost:3000/api
-npm run dev:web        # http://localhost:5173 (proxies /api to the API)
+npm run setup          # once: creates apps/api/.env if missing, migrates, imports the initial dashboard
+npm run dev            # API on http://localhost:3000/api + web on http://localhost:5173 (proxies /api)
 ```
+
+`setup` is safe to re-run: it keeps an existing `.env`, applies only pending migrations and
+skips widgets that are already seeded. If the database is not at the default URL, edit
+`DATABASE_URL` in `apps/api/.env` and run `npm run setup` again. `npm run dev:api` and
+`npm run dev:web` start the servers separately.
 
 Checks from the repo root:
 
