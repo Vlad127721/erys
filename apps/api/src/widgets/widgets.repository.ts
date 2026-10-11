@@ -1,5 +1,12 @@
-import { assertNever, widgetPayloadSchema, type WidgetMeta, type WidgetPayload } from '@youscan/shared';
-import type { Prisma, PrismaClient } from '../generated/prisma/client.js';
+import {
+  assertNever,
+  importResultSchema,
+  widgetPayloadSchema,
+  type ImportResult,
+  type WidgetMeta,
+  type WidgetPayload,
+} from '@youscan/shared';
+import { Prisma, type PrismaClient } from '../generated/prisma/client.js';
 
 /** Stored JSON does not match the schema for the widget's type. */
 export class CorruptedWidgetDataError extends Error {
@@ -12,6 +19,17 @@ export class CorruptedWidgetDataError extends Error {
   }
 }
 
+/** Another request has already stored an import under this idempotency key. */
+export class ImportKeyTakenError extends Error {
+  constructor(
+    readonly key: string,
+    options?: ErrorOptions,
+  ) {
+    super(`Import key ${key} is already taken`, options);
+    this.name = 'ImportKeyTakenError';
+  }
+}
+
 export interface NewWidget {
   title: string;
   payload: WidgetPayload;
@@ -21,6 +39,17 @@ export interface NewWidget {
 
 /** What to do with a keyed widget whose `sourceKey` already exists. */
 export type OnExistingSource = 'skip' | 'replace';
+
+/** An idempotent import: the client's key and a hash of the request it was first used with. */
+export interface ImportRecord {
+  key: string;
+  fingerprint: string;
+}
+
+export interface StoredImport {
+  fingerprint: string;
+  result: ImportResult;
+}
 
 export interface SavedWidget {
   id: string;
@@ -92,12 +121,24 @@ export class WidgetsRepository {
     return count > 0;
   }
 
+  async findImport(key: string): Promise<StoredImport | null> {
+    const row = await this.prisma.importRequest.findUnique({ where: { key } });
+    return row && { fingerprint: row.fingerprint, result: importResultSchema.parse(row.result) };
+  }
+
   /**
    * Inserts widgets (they appear last on the dashboard) in one transaction: either all of them
    * are saved or none. Keyed widgets that already exist are skipped, or replaced in place,
    * keeping their creation time and so their place.
+   *
+   * With `record`, the import is stored under its idempotency key in the same transaction.
+   * @throws ImportKeyTakenError if the key is already stored; nothing is saved then.
    */
-  async saveMany(widgets: readonly NewWidget[], onExisting: OnExistingSource): Promise<SavedWidget[]> {
+  async saveMany(
+    widgets: readonly NewWidget[],
+    onExisting: OnExistingSource,
+    record?: ImportRecord,
+  ): Promise<SavedWidget[]> {
     const rows = widgets.map(({ title, payload, sourceKey }) => {
       const { type, data } = widgetPayloadSchema.parse(payload);
       return { title, type, data: data, sourceKey: sourceKey ?? null };
@@ -136,7 +177,21 @@ export class WidgetsRepository {
             assertNever(onExisting);
         }
       }
+      if (record) await this.storeImport(tx, record, { widgets: saved });
       return saved;
     });
+  }
+
+  private async storeImport(tx: Prisma.TransactionClient, record: ImportRecord, result: ImportResult): Promise<void> {
+    try {
+      // A concurrent request with the same key waits here on the primary key until the first
+      // commits, then fails; its transaction, widgets included, is rolled back.
+      await tx.importRequest.create({ data: { ...record, result } });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new ImportKeyTakenError(record.key, { cause: error });
+      }
+      throw error;
+    }
   }
 }

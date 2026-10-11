@@ -1,4 +1,4 @@
-import { importTargetsSchema } from '@youscan/shared';
+import { idempotencyKeySchema, importTargetsSchema } from '@youscan/shared';
 import { Router } from 'express';
 import multer from 'multer';
 import { z } from 'zod';
@@ -25,6 +25,10 @@ const importBodySchema = z.object({
  * POST /import, multipart/form-data:
  * - `file`: .xlsx or .csv, at most `maxUploadBytes` (413 otherwise)
  * - `targets`: JSON array of `{ widgetType, title, sheet?, mapping }`, one per widget to create.
+ *
+ * Optional `Idempotency-Key` header: a repeat of the same request returns the first response
+ * (with `Idempotent-Replayed: true`) instead of importing again; 422 if the key was used for a
+ * different request.
  */
 export function importRouter(ingestion: IngestionService, maxUploadBytes: number): Router {
   const router = Router();
@@ -33,8 +37,17 @@ export function importRouter(ingestion: IngestionService, maxUploadBytes: number
 
   router.post('/import', upload.single('file'), async (req, res) => {
     const { targets } = parseWith(importBodySchema, req.body ?? {});
+    const key = req.get('Idempotency-Key');
     if (!req.file) throw badRequest('A "file" field is required');
-    res.status(201).json(await ingestion.importFile({ name: req.file.originalname, content: req.file.buffer }, targets));
+    const file = { name: req.file.originalname, content: req.file.buffer };
+
+    if (key === undefined) {
+      res.status(201).json(await ingestion.importFile(file, targets));
+      return;
+    }
+    const { result, replayed } = await ingestion.importFileOnce(file, targets, parseWith(idempotencyKeySchema, key));
+    if (replayed) res.set('Idempotent-Replayed', 'true');
+    res.status(201).json(result);
   });
 
   return router;
