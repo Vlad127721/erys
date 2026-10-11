@@ -10,7 +10,7 @@
     "node": ">=20.19"
   },
   "scripts": {
-    "setup": "node scripts/ensure-env.mjs && npm run build -w @youscan/shared && npm run db:migrate && npm run build -w @youscan/api && npm run db:seed",
+    "setup": "node scripts/ensure-env.mjs && npm run build -w @youscan/shared && npm run db:migrate && npm run build -w @youscan/api",
     "dev": "npm run build -w @youscan/shared && concurrently -k -n api,web -c blue,magenta \"npm:dev:api\" \"npm:dev:web\"",
     "dev:api": "npm run dev -w @youscan/api",
     "dev:web": "npm run dev -w @youscan/web",
