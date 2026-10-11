@@ -84,14 +84,6 @@ curl -X POST http://localhost:3000/api/import \
                "mapping":{"shape":"long","x":"Date","series":"Region","value":"Amount"}}]'
 ```
 
-Retries are safe with an `Idempotency-Key` header (any id the client generates, such as a UUID):
-the first request imports and stores its response under the key, in the same transaction as the
-widgets; a repeat of the same request (same file name, content and targets), even a concurrent
-one, gets that response back with `Idempotent-Replayed: true` and imports nothing. Reusing a key
-for a different request is a 422. A failed import stores nothing, so it can be retried with the
-same key. Without the header, every request imports. Keys are kept indefinitely (one small row
-per import).
-
 ### Seed
 
 `data/seed-manifest.json` lists the initial widgets, each with a stable `sourceKey`
@@ -110,7 +102,7 @@ would bring back initial widgets that a user had deleted.
 | `POST` | `/api/widgets` | `{ type, title? }`. Chart widgets get random data, generated once and stored |
 | `PUT` | `/api/widgets/:id/text` | `{ text }`; 422 for non-text widgets |
 | `DELETE` | `/api/widgets/:id` | 204 |
-| `POST` | `/api/import` | See above; 415 for unsupported file types, 413 over `MAX_UPLOAD_SIZE_BYTES` (default 5 MiB), 400 for more than one file; optional `Idempotency-Key` (422 when reused for a different request) |
+| `POST` | `/api/import` | See above; 415 for unsupported file types, 413 over `MAX_UPLOAD_SIZE_BYTES` (default 5 MiB) |
 | `GET` | `/api/health` | Checks the database |
 
 Request bodies are validated with the shared zod schemas (400 with `issues`). Ids must be

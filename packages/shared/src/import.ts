@@ -49,11 +49,3 @@ export const importResultSchema = z.object({
   widgets: z.array(z.object({ id: z.uuid(), title: z.string(), status: z.enum(['created', 'replaced', 'skipped']) })),
 });
 export type ImportResult = z.infer<typeof importResultSchema>;
-
-/**
- * The `Idempotency-Key` header of `POST /api/import`: a client-generated id (a UUID, for example)
- * that makes retrying an import safe. Visible ASCII, at most 255 characters.
- */
-export const idempotencyKeySchema = z
-  .string()
-  .regex(/^[\x21-\x7E]{1,255}$/, 'Idempotency-Key must be 1 to 255 visible ASCII characters');

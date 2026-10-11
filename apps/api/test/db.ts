@@ -26,5 +26,5 @@ export function createTestApp(): TestApp {
 }
 
 export async function resetDb(prisma: PrismaClient): Promise<void> {
-  await prisma.$transaction([prisma.widget.deleteMany(), prisma.importRequest.deleteMany()]);
+  await prisma.widget.deleteMany();
 }
